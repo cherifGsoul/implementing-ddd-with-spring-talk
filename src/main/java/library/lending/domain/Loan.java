@@ -1,54 +1,76 @@
 package library.lending.domain;
 
-import jakarta.persistence.AttributeOverride;
-import jakarta.persistence.Column;
-import jakarta.persistence.Embedded;
-import jakarta.persistence.EmbeddedId;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Version;
-import org.springframework.data.domain.AbstractAggregateRoot;
-import org.springframework.util.Assert;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Set;
 
-@Entity
-public class Loan extends AbstractAggregateRoot<Loan> {
-    @EmbeddedId
-    private LoanId loanId;
-    @Embedded
-    @AttributeOverride(name = "id", column = @Column(name = "copy_id"))
-    private CopyId copyId;
-    @Embedded
-    @AttributeOverride(name = "id", column = @Column(name = "user_id"))
-    private UserId userId;
-    private LocalDateTime createdAt;
-    private LocalDate expectedReturnDate;
+public class Loan {
+    private final LoanId loanId;
+    private final CopyId copyId;
+    private final Borrower borrower;
+    private final LoanPeriod period;
     private LocalDateTime returnedAt;
+    private Set<LoanEvent> events;
 
-    @Version
-    private Long version;
 
-    Loan() {
+    Loan(LoanId loanId, CopyId copyId, Borrower borrower, LoanPeriod period, LocalDateTime returnedAt) {
+        this.loanId = loanId;
+        this.copyId = copyId;
+        this.borrower = borrower;
+        this.period = period;
+        this.returnedAt = returnedAt;
     }
 
-    public Loan(CopyId copyId, UserId userId, LoanRepository loanRepository) {
-        Assert.notNull(copyId, "copyId must not be null");
-        Assert.notNull(userId, "userId must not be null");
-        Assert.isTrue(loanRepository.isAvailable(copyId), "copy with id = " + copyId + " is not available");
+    public Loan(CopyId copyId, Borrower borrower) {
         this.loanId = new LoanId();
         this.copyId = copyId;
-        this.userId = userId;
-        this.createdAt = LocalDateTime.now();
-        this.expectedReturnDate = LocalDate.now().plusDays(30);
-        this.registerEvent(new LoanCreated(this.copyId));
+        this.borrower = borrower;
+        this.period = LoanPeriod.thirtyDaysStartingFromNow();
+        this.recordThat(new LoanEvent.LoanCreated(this.copyId));
+    }
+
+    public static Loan reconstitute(LoanId loanId, CopyId copyId, Borrower borrower, LoanPeriod period, LocalDateTime returnedAt) {
+        return new Loan(loanId, copyId, borrower, period, returnedAt);
     }
 
     public void returned() {
         this.returnedAt = LocalDateTime.now();
-        if (this.returnedAt.isAfter(expectedReturnDate.atStartOfDay())) {
+        if (this.period.isExceeded(this.returnedAt)) {
             // calculate fee
         }
-        this.registerEvent(new LoanClosed(this.copyId));
+        this.recordThat(new LoanEvent.LoanClosed(this.copyId));
+    }
+
+    private void recordThat(LoanEvent loanCreated) {
+        events.add(loanCreated);
+    }
+
+    public Set<LoanEvent> releaseEvents() {
+        return events;
+    }
+
+
+    public LoanId loanId() {
+        return loanId;
+    }
+
+    public CopyId copyId() {
+        return copyId;
+    }
+
+    public Borrower borrower() {
+        return borrower;
+    }
+
+    public LocalDateTime borrowedAt() {
+        return period.startAt();
+    }
+
+    public LocalDate expectedReturnDate() {
+        return period.expectedReturnDate();
+    }
+
+    public LocalDateTime returnedAt() {
+        return returnedAt;
     }
 }

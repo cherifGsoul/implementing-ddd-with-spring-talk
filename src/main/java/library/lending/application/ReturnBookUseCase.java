@@ -1,22 +1,25 @@
 package library.lending.application;
 
-import library.UseCase;
 import library.lending.domain.Loan;
+import library.lending.domain.LoanEvent;
 import library.lending.domain.LoanId;
-import library.lending.domain.LoanRepository;
+import library.lending.domain.Loans;
 
-@UseCase
+import java.util.Set;
+
 public class ReturnBookUseCase {
 
 
-    private final LoanRepository loanRepository;
+    private final Loans loans;
 
-    public ReturnBookUseCase(LoanRepository loanRepository) {
-        this.loanRepository = loanRepository;
+    public ReturnBookUseCase(Loans loans) {
+        this.loans = loans;
     }
 
-    public void execute(LoanId loanId) {
-        Loan loan = loanRepository.findByIdOrThrow(loanId);
+    public void execute(LoanId loanId) throws Exception {
+        Loan loan = loans.forId(loanId);
         loan.returned();
+        Set<LoanEvent> events = loan.releaseEvents();
+        // TODO dispatch events
     }
 }

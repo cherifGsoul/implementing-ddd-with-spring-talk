@@ -1,13 +1,16 @@
 package library.lending.domain;
 
-import org.springframework.util.Assert;
+import com.sun.jdi.InvalidTypeException;
 
 import java.util.UUID;
 
 public record CopyId(UUID id) {
 
-    public CopyId {
-        Assert.notNull(id, "id must not be null");
+    public static CopyId fromUUID(UUID id) throws InvalidTypeException {
+        if (id == null) {
+            throw new InvalidTypeException("Copy id must not be null");
+        }
+        return new CopyId(id);
     }
 
     public CopyId() {

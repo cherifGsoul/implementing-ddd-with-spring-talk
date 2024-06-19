@@ -1,21 +1,21 @@
 package library.lending.application;
 
-import library.UseCase;
-import library.lending.domain.CopyId;
-import library.lending.domain.Loan;
-import library.lending.domain.LoanRepository;
-import library.lending.domain.UserId;
+import library.lending.domain.*;
 
-@UseCase
+import java.util.Set;
+
 public class RentBookUseCase {
-    private final LoanRepository loanRepository;
+    private final Loans loans;
 
-    public RentBookUseCase(LoanRepository loanRepository) {
-        this.loanRepository = loanRepository;
+    public RentBookUseCase(Loans loanRepository) {
+        this.loans = loanRepository;
     }
 
-    public void execute(CopyId copyId, UserId userId) {
+    public void execute(CopyId copyId, Borrower userId) {
         // TODO: ensure rented copy is not rented again
-        loanRepository.save(new Loan(copyId, userId, loanRepository));
+        Loan loan = new Loan(copyId, userId);
+        loans.save(loan);
+        Set<LoanEvent> events = loan.releaseEvents();
+        // TODO dispatch events
     }
 }

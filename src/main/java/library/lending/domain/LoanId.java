@@ -1,13 +1,16 @@
 package library.lending.domain;
 
-import org.springframework.util.Assert;
+import com.sun.jdi.InvalidTypeException;
 
 import java.util.UUID;
 
 public record LoanId(UUID id) {
 
-    public LoanId {
-        Assert.notNull(id, "id must not be null");
+    public static LoanId fromUUID(UUID id) throws InvalidTypeException {
+        if (id == null) {
+            throw new InvalidTypeException("Loan id must not be null");
+        }
+        return new LoanId(id);
     }
 
     public LoanId() {

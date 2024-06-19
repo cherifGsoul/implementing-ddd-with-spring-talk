@@ -3,8 +3,6 @@ package library.catalog.application;
 import library.catalog.domain.Copy;
 import library.catalog.domain.CopyId;
 import library.catalog.domain.CopyRepository;
-import library.lending.domain.LoanClosed;
-import library.lending.domain.LoanCreated;
 import org.springframework.modulith.events.ApplicationModuleListener;
 import org.springframework.stereotype.Component;
 
